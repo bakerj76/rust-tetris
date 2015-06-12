@@ -7,3 +7,4 @@ authors = ["James <bakerj76@unlv.nevada.edu>"]
 glium = "*"
 clock_ticks = "*"
 cgmath = "*"
+image = "*"

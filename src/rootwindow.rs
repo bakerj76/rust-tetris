@@ -4,11 +4,16 @@ use glium::glutin;
 
 use clock_ticks;
 
+use cgmath;
+
 use std::thread;
 use std::io;
 
 use sprite::Sprite;
 use tetris::Tetris;
+
+const WIDTH: u32 = 800;
+const HEIGHT: u32 = 600;
 
 /// The window
 pub struct RootWindow
@@ -16,6 +21,7 @@ pub struct RootWindow
     pub display: glium::backend::glutin_backend::GlutinFacade,
 
     program: glium::Program,
+    ortho_matrix: cgmath::Matrix4<f32>,
 
     pub max_frame_rate: u32,
     pub delta_time: f64,
@@ -26,7 +32,7 @@ pub struct Vertex
 {
     pub position: [f32; 2],
     pub color: [f32; 4],
-    pub tex_coord: [f32; 2],
+    pub tex_coords: [f32; 2],
 }
 
 impl RootWindow
@@ -35,7 +41,7 @@ impl RootWindow
     pub fn new() -> io::Result<RootWindow>
     {
         let display = glium::glutin::WindowBuilder::new()
-            .with_dimensions(800, 600)
+            .with_dimensions(WIDTH, HEIGHT)
             .build_glium()
             .unwrap();
 
@@ -47,13 +53,14 @@ impl RootWindow
             },
         ).unwrap();
 
-        implement_vertex!(Vertex, position, color, tex_coord);
+        implement_vertex!(Vertex, position, color, tex_coords);
 
         Ok(RootWindow
         {
             display: display,
 
             program: program,
+            ortho_matrix: cgmath::ortho(0.0, WIDTH as f32, HEIGHT as f32, 0.0, -1.0, 1.0),
 
             max_frame_rate: 60,
             delta_time: 0.0,
@@ -89,7 +96,7 @@ impl RootWindow
                 self.delta_time = fixed_time_stamp as f64 / 1E+9;//(now - delta) as f64 / 1E+9;
 
                 accumulator -= fixed_time_stamp;
-                
+
                 // Update the game logic
                 tetris.update(self);
             }
@@ -98,7 +105,6 @@ impl RootWindow
 
             thread::sleep_ms(((fixed_time_stamp - accumulator) as f64 / 1E+6) as u32);
         }
-
     }
 
     /// Handles sprite drawing
@@ -106,11 +112,11 @@ impl RootWindow
     fn draw(&mut self, sprites: &Vec<Sprite>)
     {
         let mut target = self.display.draw();
-        target.clear_color(0.0, 0.0, 0.0, 1.0);
+        target.clear_color(0.8, 0.5, 0.5, 1.0);
 
         for ref sprite in sprites.iter()
         {
-            sprite.draw(&mut target, &self.program);
+            sprite.draw(&mut target, &self.program, &self.ortho_matrix);
         }
 
         target.finish();

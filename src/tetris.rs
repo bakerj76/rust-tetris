@@ -1,6 +1,8 @@
 use std::io;
 
 use cgmath::Vector2;
+use image;
+use glium;
 
 use sprite::Sprite;
 use rootwindow::RootWindow;
@@ -22,7 +24,14 @@ impl Tetris
 
     pub fn start(&mut self, display: &mut RootWindow)
     {
-        self.sprites.push(Sprite::new(&display.display, 0, Vector2::new(0.0 as f32, 0.0))
+        //Load image
+        let image = image::load(io::Cursor::new(&include_bytes!("../spritesheet.png")[..]),
+            image::PNG).unwrap();
+
+        let texture = glium::texture::Texture2d::new(&display.display, image);
+
+        self.sprites.push(Sprite::new(&display.display, texture, 0,
+            [0.0, 0.7, 0.3, 1.0], Vector2::new(200.0 as f32, 150.0))
             .unwrap());
 
         display.start(self);
@@ -37,6 +46,6 @@ impl Tetris
             piece.position.y)
         };
 
-        piece.set_position(Vector2::new(x, y));
+        //piece.set_position(Vector2::new(x, y));
     }
 }

@@ -2,6 +2,7 @@ extern crate clock_ticks;
 #[macro_use]
 extern crate glium;
 extern crate cgmath;
+extern crate image;
 
 mod rootwindow;
 mod sprite;
