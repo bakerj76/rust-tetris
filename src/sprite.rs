@@ -68,7 +68,7 @@ impl Sprite
             sprite_id: sprite,
 
             position: cgmath::zero(),
-            roation: 0.0,
+            rotation: 0.0,
             tint: tint,
 
             vertex_buffer: vertex_buffer,
