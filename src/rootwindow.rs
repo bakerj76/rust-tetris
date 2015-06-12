@@ -1,6 +1,9 @@
 use glium;
 use glium::{DisplayBuild, Surface};
+use glium::glutin;
+
 use clock_ticks;
+
 use std::thread;
 use std::io;
 
@@ -62,7 +65,8 @@ impl RootWindow
 
         loop
         {
-            if self.draw()
+            self.draw();
+            if self.do_input()
             {
                 break;
             }
@@ -82,19 +86,31 @@ impl RootWindow
 
     }
 
-    pub fn draw(&mut self) -> bool
+    pub fn draw(&mut self)
     {
         let mut target = self.display.draw();
         target.clear_color(0.0, 0.0, 0.0, 1.0);
 
-        for ref sprite in self.sprites
+        for ref sprite in self.sprites.iter()
         {
-            sprite.draw(&target, &self.program);
+            sprite.draw(&mut target, &self.program);
         }
 
         target.finish();
+    }
 
-        return self.display.is_closed();
+    pub fn do_input(&self) -> bool
+    {
+        for event in self.display.poll_events()
+        {
+            match event
+            {
+                glutin::Event::Closed => return true,
+                _ => ()
+            }
+        }
+
+        false
     }
 
     pub fn add_sprite(&mut self, sprite: Sprite)

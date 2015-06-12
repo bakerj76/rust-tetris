@@ -1,8 +1,8 @@
 use std::io;
 
 use glium;
-use glium::{DisplayBuild, Surface};
-use glium::index::PrimitiveType;
+use glium::Surface;
+use glium::index;
 
 use rootwindow::Vertex;
 
@@ -19,8 +19,8 @@ pub struct Sprite
     position: Position,
     tint: [f32; 4],
 
-    vertex_buffer: glium::VertexBuffer<Vertex>,
-    index_buffer: glium::IndexBuffer<u16>,
+    pub vertex_buffer: glium::VertexBuffer<Vertex>,
+    pub index_buffer: glium::IndexBuffer<u16>,
 }
 
 impl Sprite
@@ -29,19 +29,22 @@ impl Sprite
     {
         let vertex_buffer = glium::VertexBuffer::new(display,
             vec![
-                Vertex {
+                Vertex
+                {
                     position: [position.x - 0.1, position.y - 0.1],
                     color: [1.0, 1.0, 1.0, 1.0],
-                    tex_coord: [0.0, 0.0],
+                    tex_coord: [0.0, 1.0],
                 },
 
-                Vertex {
+                Vertex
+                {
                     position: [position.x + 0.1, position.y - 0.1],
                     color: [1.0, 1.0, 1.0, 1.0],
-                    tex_coord: [0.0, 0.0],
+                    tex_coord: [1.0, 1.0],
                 },
 
-                Vertex {
+                Vertex
+                {
                     position: [position.x + 0.1, position.y + 0.1],
                     color: [1.0, 1.0, 1.0, 1.0],
                     tex_coord: [0.0, 0.0],
@@ -55,7 +58,7 @@ impl Sprite
             ]
         );
 
-        let index_buffer = glium::IndexBuffer::new(display, PrimitiveType::TrianglesList,
+        let index_buffer = glium::IndexBuffer::new(display, index::PrimitiveType::TrianglesList,
             vec![0, 2, 1, 0, 3, 2]
         );
 
@@ -73,13 +76,13 @@ impl Sprite
         Ok(sprite)
     }
 
-    pub fn draw(self, target: &glium::Frame, program: &glium::Program)
+    pub fn draw(&self, target: &mut glium::Frame, program: &glium::Program)
     {
         target.draw(&self.vertex_buffer,
                     &self.index_buffer,
                     program,
                     &glium::uniforms::EmptyUniforms,
                     &Default::default()
-        );
+        ).unwrap();
     }
 }

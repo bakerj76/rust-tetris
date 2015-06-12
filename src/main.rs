@@ -13,8 +13,9 @@ fn main()
     let mut rootwindow = RootWindow::new()
         .unwrap();
 
-    let sprite = Sprite::new(&rootwindow.display, 0, Position{ x: 0.0, y: 0.0 }).unwrap();
+    let sprite = Sprite::new(&rootwindow.display, 0, Position{ x: 0.0, y: 0.0 })
+        .unwrap();
 
-    rootwindow.start();
     rootwindow.add_sprite(sprite);
+    rootwindow.start();
 }
