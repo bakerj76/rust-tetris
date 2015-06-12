@@ -1,21 +1,22 @@
 extern crate clock_ticks;
 #[macro_use]
 extern crate glium;
+extern crate cgmath;
 
 mod rootwindow;
 mod sprite;
+mod tetris;
 
 use rootwindow::RootWindow;
-use sprite::{Sprite, Position};
+use tetris::Tetris;
 
 fn main()
 {
     let mut rootwindow = RootWindow::new()
         .unwrap();
 
-    let sprite = Sprite::new(&rootwindow.display, 0, Position{ x: 0.0, y: 0.0 })
+    let mut tetris = Tetris::new()
         .unwrap();
 
-    rootwindow.add_sprite(sprite);
-    rootwindow.start();
+    tetris.start(&mut rootwindow);
 }
