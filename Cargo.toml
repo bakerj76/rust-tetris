@@ -1,0 +1,8 @@
+[package]
+name = "tetris"
+version = "0.0.1"
+authors = ["James <bakerj76@unlv.nevada.edu>"]
+
+[dependencies]
+glium = "*"
+clock_ticks = "*"
