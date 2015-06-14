@@ -1,10 +1,13 @@
-use glium;
-use glium::{DisplayBuild, Surface};
-use glium::glutin;
+use cgmath;
 
 use clock_ticks;
 
-use cgmath;
+use glium;
+use glium::{DisplayBuild, Surface};
+use glium::glutin;
+use glium::texture;
+
+use image;
 
 use std::thread;
 use std::io;
@@ -19,6 +22,7 @@ const HEIGHT: u32 = 600;
 pub struct RootWindow
 {
     pub display: glium::backend::glutin_backend::GlutinFacade,
+    square_texture: Option<texture::Texture2d>,
 
     program: glium::Program,
     ortho_matrix: cgmath::Matrix4<f32>,
@@ -33,6 +37,15 @@ pub struct Vertex
     pub position: [f32; 2],
     pub color: [f32; 4],
     pub tex_coords: [f32; 2],
+}
+
+
+/// The current update/draw state
+/// TODO: Rename this
+pub enum LoopState
+{
+    Stop,
+    Play,
 }
 
 impl RootWindow
@@ -58,6 +71,7 @@ impl RootWindow
         Ok(RootWindow
         {
             display: display,
+            square_texture: None,
 
             program: program,
             ortho_matrix: cgmath::ortho(0.0, WIDTH as f32, HEIGHT as f32, 0.0, -1.0, 1.0),
@@ -70,15 +84,18 @@ impl RootWindow
     /// Starts the draw loop
     pub fn start(&mut self, tetris: &mut Tetris)
     {
+        self.setup_textures();
+
         let mut accumulator = 0;
         let mut previous_clock = clock_ticks::precise_time_ns();
 
         loop
         {
-            self.draw(&tetris.sprites);
-            if self.do_input()
+            self.draw(tetris);
+            match self.do_input(tetris)
             {
-                break;
+                LoopState::Stop => break,
+                _ => ()
             }
 
             let now = clock_ticks::precise_time_ns();
@@ -93,6 +110,7 @@ impl RootWindow
             while accumulator >= fixed_time_stamp
             {
                 // The time since the last frame
+                // TODO: Make this the actual time
                 self.delta_time = fixed_time_stamp as f64 / 1E+9;//(now - delta) as f64 / 1E+9;
 
                 accumulator -= fixed_time_stamp;
@@ -109,31 +127,57 @@ impl RootWindow
 
     /// Handles sprite drawing
     /// TODO: sprite batching
-    fn draw(&mut self, sprites: &Vec<Sprite>)
+    fn draw(&mut self, tetris: &mut Tetris)
     {
-        let mut target = self.display.draw();
-        target.clear_color(0.8, 0.5, 0.5, 1.0);
-
-        for ref sprite in sprites.iter()
+        let texture = match self.square_texture
         {
-            sprite.draw(&mut target, &self.program, &self.ortho_matrix);
+            Some(ref x) => x,
+            None => panic!("Square texture not found!")
+        };
+
+        let mut target = self.display.draw();
+        target.clear_color(0.8, 0.8, 0.9, 1.0);
+
+        for ref piece in tetris.tetrominos.iter()
+        {
+            for ref sprite in piece.sprites.iter()
+            {
+                sprite.draw(&mut target, &self.program, texture, &self.ortho_matrix);
+            }
         }
 
         target.finish();
     }
 
     /// Handles events
-    fn do_input(&self) -> bool
+    fn do_input(&self, tetris: &mut Tetris) -> LoopState
     {
+        let mut state = LoopState::Play;
+
         for event in self.display.poll_events()
         {
-            match event
+            state = match event
             {
-                glutin::Event::Closed => return true,
+                glutin::Event::Closed => LoopState::Stop,
+                _ => tetris.handle_input(self, event),
+            };
+
+            match state
+            {
+                LoopState::Stop => return state,
                 _ => ()
             }
         }
 
-        false
+        state
+    }
+
+    fn setup_textures(&mut self)
+    {
+        //Load image
+        let image = image::load(io::Cursor::new(&include_bytes!("../spritesheet.png")[..]),
+            image::PNG).unwrap();
+
+        self.square_texture = Some(texture::Texture2d::new(&self.display, image));
     }
 }

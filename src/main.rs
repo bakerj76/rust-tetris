@@ -4,9 +4,11 @@ extern crate glium;
 extern crate cgmath;
 extern crate image;
 
+mod cellmatrix;
 mod rootwindow;
 mod sprite;
 mod tetris;
+mod tetromino;
 
 use rootwindow::RootWindow;
 use tetris::Tetris;
