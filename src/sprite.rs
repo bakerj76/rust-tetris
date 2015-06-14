@@ -31,27 +31,27 @@ impl Sprite
             vec![
                 Vertex
                 {
-                    position: [position.x - 8.0, position.y - 8.0],
+                    position: [-8.0, -8.0],
                     color: tint,
                     tex_coords: [0.0, 1.0],
                 },
 
                 Vertex
                 {
-                    position: [position.x + 8.0, position.y - 8.0],
+                    position: [8.0, -8.0],
                     color: tint,
                     tex_coords: [0.5, 1.0],
                 },
 
                 Vertex
                 {
-                    position: [position.x + 8.0, position.y + 8.0],
+                    position: [8.0, 8.0],
                     color: tint,
                     tex_coords: [0.5, 0.5],
                 },
 
                 Vertex {
-                    position: [position.x - 8.0, position.y + 8.0],
+                    position: [-8.0, 8.0],
                     color: tint,
                     tex_coords: [0.0, 0.5],
                 },

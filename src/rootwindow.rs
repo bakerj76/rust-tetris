@@ -172,6 +172,7 @@ impl RootWindow
         state
     }
 
+    // Sets up all of the textures
     fn setup_textures(&mut self)
     {
         //Load image

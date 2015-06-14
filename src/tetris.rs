@@ -32,7 +32,7 @@ impl Tetris
 
     pub fn start(&mut self, display: &mut RootWindow)
     {
-        let mut tetromino = Tetromino::new(display, Shape::LBlock, Vector2::new(200.0, 150.0));
+        let mut tetromino = Tetromino::new(display, Shape::LBlock, Vector2::new(400.0, 300.0));
 
         self.tetrominos.push(tetromino);
 
@@ -68,6 +68,7 @@ impl Tetris
         }
     }
 
+    ///TODO: Split this up into methods to reduce repeated code
     fn handle_keyboard(&mut self, display: &RootWindow, state: ElementState,
         keycode: Option<VirtualKeyCode>) -> LoopState
     {
@@ -82,21 +83,31 @@ impl Tetris
         {
             (VirtualKeyCode::Left, ElementState::Pressed) =>
             {
-                if self.key_held.is_none() || self.key_held.unwrap() == VirtualKeyCode::Right
+                if self.key_held.is_none() || self.key_held.unwrap() != key
                 {
                     self.key_held = Some(key);
-                    self.move_piece(display, Vector2::new(-1, 0))
+                    self.move_piece(Vector2::new(-1, 0))
                 }
             },
 
             (VirtualKeyCode::Right, ElementState::Pressed) =>
             {
-                if self.key_held.is_none() || self.key_held.unwrap() == VirtualKeyCode::Left
+                if self.key_held.is_none() || self.key_held.unwrap() != key
                 {
                     self.key_held = Some(key);
-                    self.move_piece(display, Vector2::new(1, 0));
+                    self.move_piece(Vector2::new(1, 0));
                 }
             },
+
+            (VirtualKeyCode::Up, ElementState::Pressed) =>
+            {
+                if self.key_held.is_none() || self.key_held.unwrap() != key
+                {
+                    self.key_held = Some(key);
+                    self.rotate_piece();
+                }
+            }
+
 
             (_, ElementState::Released) =>
             {
@@ -120,7 +131,7 @@ impl Tetris
         LoopState::Play
     }
 
-    fn move_piece(&mut self, display: &RootWindow, direction: Vector2<i8>)
+    fn move_piece(&mut self, direction: Vector2<i8>)
     {
         let piece = &mut self.tetrominos[0];
 
@@ -130,5 +141,12 @@ impl Tetris
         };
 
         piece.set_position(Vector2::new(x, y));
+    }
+
+    fn rotate_piece(&mut self)
+    {
+        let piece = &mut self.tetrominos[0];
+
+        piece.rotate_right();
     }
 }

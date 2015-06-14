@@ -48,9 +48,42 @@ impl Tetromino
 
     pub fn set_position(&mut self, position: Vector2<f32>)
     {
-        for ref sprite in self.sprites.iter()
+        self.position = position;
+
+        self.update_sprites();
+    }
+
+
+    pub fn rotate_right(&mut self)
+    {
+        self.matrix.rotate_right();
+
+        self.update_sprites();
+    }
+
+    /// Moves all of the sprites based on the matrix and position
+    fn update_sprites(&mut self)
+    {
+        let mut sprite_index = 0;
+
+        for y in 0..self.matrix.height
         {
-            //sprite.set_position
+            for x in 0..self.matrix.width
+            {
+                match self.matrix.get_cell(x, y)
+                {
+                    Cell::Occupied =>
+                    {
+                        let sprite = &mut self.sprites[sprite_index];
+
+                        sprite.set_position(self.position +
+                                Vector2::new(x as f32 * 16.0, y as f32 * 16.0));
+                        sprite_index += 1;
+                    },
+
+                    _ => ()
+                }
+            }
         }
     }
 
@@ -80,7 +113,7 @@ impl Tetromino
                     Cell::Occupied =>
                         sprites.push(
                             Sprite::new(&display.display, 0, [0.0, 1.0, 0.0, 1.0],
-                            position + Vector2::new(x as f32 * 8.0, y as f32 * 8.0)).unwrap()
+                            position + Vector2::new(x as f32 * 16.0, y as f32 * 16.0)).unwrap()
                         ),
                     _ => ()
                 }
