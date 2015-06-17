@@ -1,5 +1,3 @@
-use std::io;
-
 #[derive(Copy, Clone)]
 pub enum Cell
 {
@@ -21,11 +19,11 @@ impl CellMatrix
     {
         let mut matrix = Vec::new();
 
-        for y in 0..height
+        for _ in 0..height
         {
             let mut row = Vec::new();
 
-            for x in 0..width
+            for _ in 0..width
             {
                 row.push(Cell::Unoccupied);
             }

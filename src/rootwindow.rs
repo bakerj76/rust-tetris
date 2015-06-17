@@ -9,12 +9,9 @@ use glium::glutin;
 use std::thread;
 use std::io;
 
-use sprite::Sprite;
 use spritemanager::SpriteManager;
 use tetris::Tetris;
 
-const WIDTH: u32 = 400;
-const HEIGHT: u32 = 376;
 
 /// The window
 pub struct RootWindow
@@ -49,10 +46,11 @@ pub enum LoopState
 impl RootWindow
 {
     /// Creates a new root window
-    pub fn new() -> io::Result<RootWindow>
+    pub fn new(width: u32, height: u32) -> io::Result<RootWindow>
     {
         let display = glium::glutin::WindowBuilder::new()
-            .with_dimensions(WIDTH, HEIGHT)
+            .with_dimensions(width, height)
+            .with_title(format!("Rustris"))
             .build_glium()
             .unwrap();
 
@@ -72,7 +70,7 @@ impl RootWindow
             sprite_manager: None,
 
             program: program,
-            ortho_matrix: cgmath::ortho(0.0, WIDTH as f32, HEIGHT as f32, 0.0, -1.0, 1.0),
+            ortho_matrix: cgmath::ortho(0.0, width as f32, height as f32, 0.0, -1.0, 1.0),
 
             max_frame_rate: 60,
             delta_time: 0.0,
@@ -114,7 +112,7 @@ impl RootWindow
                 accumulator -= fixed_time_stamp;
 
                 // Update the game logic
-                tetris.update(self);
+                tetris.update();
             }
 
             previous_clock = now;
@@ -157,7 +155,7 @@ impl RootWindow
             state = match event
             {
                 glutin::Event::Closed => LoopState::Stop,
-                _ => tetris.handle_input(self, event),
+                _ => tetris.handle_input(event),
             };
 
             match state

@@ -1,12 +1,11 @@
 use cgmath::Vector2;
 
-use glium::texture;
-
 use rect::Rect;
 use cellmatrix::{Cell, CellMatrix};
 use sprite::Sprite;
 use rootwindow::RootWindow;
 use spritemanager::Textures;
+
 
 pub enum Shape
 {
@@ -23,7 +22,8 @@ pub struct Tetromino
 {
     pub shape: Shape,
 
-    pub position: Vector2<f32>,
+    pub board_position: Vector2<f32>,
+    pub cell_position: Vector2<i8>,
 
     matrix: CellMatrix,
     pub sprites: Vec<Sprite>,
@@ -32,26 +32,30 @@ pub struct Tetromino
 impl  Tetromino
 {
     pub fn new(display: &mut RootWindow, shape: Shape,
-        position: Vector2<f32>) -> Tetromino
+        board_position: Vector2<f32>, cell_position: Vector2<i8>) -> Tetromino
     {
         let matrix = Tetromino::build_matrix(&shape);
-        let sprites = Tetromino::build_sprites(display, position, &matrix);
+        let sprites = Tetromino::build_sprites(display, &matrix);
 
-        Tetromino
+        let mut tetromino = Tetromino
         {
             shape: shape,
 
-            position: position,
+            board_position: board_position,
+            cell_position: cell_position,
 
             matrix: matrix,
             sprites: sprites
-        }
+        };
+
+        tetromino.update_sprites();
+
+        tetromino
     }
 
-    pub fn set_position(&mut self, position: Vector2<f32>)
+    pub fn set_position(&mut self, position: Vector2<i8>)
     {
-        self.position = position;
-
+        self.cell_position = position;
         self.update_sprites();
     }
 
@@ -59,7 +63,6 @@ impl  Tetromino
     pub fn rotate_right(&mut self)
     {
         self.matrix.rotate_right();
-
         self.update_sprites();
     }
 
@@ -77,9 +80,12 @@ impl  Tetromino
                     Cell::Occupied =>
                     {
                         let sprite = &mut self.sprites[sprite_index];
+                        let position = self.board_position +
+                            Vector2::new((self.cell_position.x + x as i8) as f32 * 16.0,
+                                (self.cell_position.y + y as i8) as f32 * 16.0);
 
-                        sprite.set_position(self.position +
-                                Vector2::new(x as f32 * 16.0, y as f32 * 16.0));
+
+                        sprite.set_position(position);
                         sprite_index += 1;
                     },
 
@@ -101,7 +107,7 @@ impl  Tetromino
         matrix
     }
 
-    fn build_sprites(display: &mut RootWindow, position: Vector2<f32>, matrix: &CellMatrix)
+    fn build_sprites(display: &mut RootWindow, matrix: &CellMatrix)
         -> Vec<Sprite>
     {
         let mut sprites = Vec::<Sprite>::new();
@@ -116,7 +122,7 @@ impl  Tetromino
                         sprites.push(
                             Sprite::new_tinted(&display.display, Textures::SpriteSheet,
                                 Rect::new(-8.0, -8.0, 16.0, 16.0),
-                                position + Vector2::new(x as f32 * 16.0, y as f32 * 16.0),
+                                Vector2::new(0.0, 0.0),
                                 [0.0, 1.0, 0.0, 1.0])
                                 .unwrap()
                         ),

@@ -1,4 +1,3 @@
-use std;
 use std::io;
 
 use glium;
@@ -13,6 +12,7 @@ use rootwindow::Vertex;
 use rect::Rect;
 
 use spritemanager::Textures;
+
 
 pub struct Sprite
 {

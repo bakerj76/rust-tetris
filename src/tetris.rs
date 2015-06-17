@@ -1,21 +1,31 @@
 use std::io;
+use std::f32;
 
 use cgmath::Vector2;
 
-use glium;
 use glium::glutin::{Event, ElementState, VirtualKeyCode};
 
-use image;
-
+use cellmatrix::CellMatrix;
+use frametimer::FrameTimer;
 use sprite::Sprite;
 use spritemanager::Textures;
 use tetromino::{Tetromino, Shape};
 use rootwindow::{RootWindow, LoopState};
 use rect::Rect;
 
+const BOARD_POS: Vector2<f32> = Vector2 { x: 36.5, y: 8.5 };
+
 pub struct Tetris
 {
+    width: u32,
+    height: u32,
+
     key_held: Option<VirtualKeyCode>,
+
+    board: CellMatrix,
+
+    gravity: f32,
+    gravity_timer: Option<FrameTimer>,
 
     background: Option<Sprite>,
     tetrominos: Vec<Tetromino>,
@@ -23,11 +33,19 @@ pub struct Tetris
 
 impl Tetris
 {
-    pub fn new() -> io::Result<Tetris>
+    pub fn new(width: u32, height: u32) -> io::Result<Tetris>
     {
         Ok(Tetris
         {
+            width: width,
+            height: height,
+
             key_held: None,
+
+            board: CellMatrix::new(10, 22),
+
+            gravity: 1.0/60.0,
+            gravity_timer: None,
 
             background: None,
             tetrominos: vec![],
@@ -36,7 +54,11 @@ impl Tetris
 
     pub fn start(&mut self, display: &mut RootWindow)
     {
-        let mut tetromino = Tetromino::new(display, Shape::LBlock, Vector2::new(400.0, 300.0));
+        let tetromino = Tetromino::new(display, Shape::LBlock, BOARD_POS, Vector2::new(3, 0));
+
+        let callback = || { self.gravity(); };
+
+        self.gravity_timer = Some(FrameTimer::new((1.0/self.gravity) as u32, true, callback));
 
         self.tetrominos.push(tetromino);
         self.setup_background(display);
@@ -44,9 +66,15 @@ impl Tetris
         display.start(self);
     }
 
-    pub fn update(&mut self, display: &RootWindow)
+    pub fn update(&mut self)
     {
+        let ref gravity_timer = self.gravity_timer;
 
+        match gravity_timer
+        {
+            Some(x) => x.update(),
+            None => ()
+        }
     }
 
     pub fn get_sprites(&mut self) -> Vec<&Sprite>
@@ -70,20 +98,19 @@ impl Tetris
         sprites
     }
 
-    pub fn handle_input(&mut self, display: &RootWindow, event: Event) -> LoopState
+    pub fn handle_input(&mut self, event: Event) -> LoopState
     {
         match event
         {
-            Event::KeyboardInput(state, code, keycode) =>
-                self.handle_keyboard(display, state, keycode),
+            Event::KeyboardInput(state, _, keycode) =>
+                self.handle_keyboard(state, keycode),
 
             _ => return LoopState::Play
         }
     }
 
-    ///TODO: Split this up into methods to reduce repeated code
-    fn handle_keyboard(&mut self, display: &RootWindow, state: ElementState,
-        keycode: Option<VirtualKeyCode>) -> LoopState
+    fn handle_keyboard(&mut self, state: ElementState, keycode: Option<VirtualKeyCode>)
+        -> LoopState
     {
 
         let key = match keycode
@@ -137,13 +164,8 @@ impl Tetris
     fn move_piece(&mut self, direction: Vector2<i8>)
     {
         let piece = &mut self.tetrominos[0];
-
-        let (x, y) = {
-            (piece.position.x + direction.x as f32 * 16.0,
-             piece.position.y + direction.y as f32 * 16.0)
-        };
-
-        piece.set_position(Vector2::new(x, y));
+        let position = piece.cell_position + direction;
+        piece.set_position(position);
     }
 
     fn rotate_piece(&mut self)
@@ -152,15 +174,19 @@ impl Tetris
         piece.rotate_right();
     }
 
+    fn gravity(&mut self)
+    {
+        self.move_piece(Vector2::new(0, self.gravity.ceil() as i8));
+    }
+
     /// Sets up background image
     fn setup_background(&mut self, display: &mut RootWindow)
     {
-        //TODO: un-hard-code the width and height
         self.background = Some(
             Sprite::new(
                 &display.display,
                 Textures::Background,
-                Rect::new(0.0, 0.0, 400.0, 376.0),
+                Rect::new(0.0, 0.0, self.width as f32, self.height as f32),
                 Vector2::new(0.0, 0.0)
             ).unwrap()
         );
