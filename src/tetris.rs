@@ -8,14 +8,17 @@ use glium::glutin::{Event, ElementState, VirtualKeyCode};
 use image;
 
 use sprite::Sprite;
+use spritemanager::Textures;
 use tetromino::{Tetromino, Shape};
 use rootwindow::{RootWindow, LoopState};
+use rect::Rect;
 
 pub struct Tetris
 {
     key_held: Option<VirtualKeyCode>,
 
-    pub tetrominos: Vec<Tetromino>,
+    background: Option<Sprite>,
+    tetrominos: Vec<Tetromino>,
 }
 
 impl Tetris
@@ -26,6 +29,7 @@ impl Tetris
         {
             key_held: None,
 
+            background: None,
             tetrominos: vec![],
         })
     }
@@ -35,26 +39,35 @@ impl Tetris
         let mut tetromino = Tetromino::new(display, Shape::LBlock, Vector2::new(400.0, 300.0));
 
         self.tetrominos.push(tetromino);
+        self.setup_background(display);
 
         display.start(self);
     }
 
     pub fn update(&mut self, display: &RootWindow)
     {
-        /*let piece = &mut self.sprites[0];
 
-        let (x, y) = {
-            (piece.position.x + 32.0 * display.delta_time as f32,
-            piece.position.y)
+    }
+
+    pub fn get_sprites(&mut self) -> Vec<&Sprite>
+    {
+        let bg = match self.background
+        {
+            Some(ref x) => x,
+            None => panic!("Couldn't find background?!?")
         };
 
-        let rotation = {
-            piece.rotation + 60.0 * display.delta_time as f32
-        };
+        let mut sprites = vec![bg];
 
-        piece.set_position(Vector2::new(x, y));
-        piece.set_rotation(rotation);*/
+        for piece in self.tetrominos.iter()
+        {
+            for sprite in piece.sprites.iter()
+            {
+                sprites.push(sprite);
+            }
+        }
 
+        sprites
     }
 
     pub fn handle_input(&mut self, display: &RootWindow, event: Event) -> LoopState
@@ -82,32 +95,13 @@ impl Tetris
         match (key, state)
         {
             (VirtualKeyCode::Left, ElementState::Pressed) =>
-            {
-                if self.key_held.is_none() || self.key_held.unwrap() != key
-                {
-                    self.key_held = Some(key);
-                    self.move_piece(Vector2::new(-1, 0))
-                }
-            },
+                self.handle_key(key, |tetris| { tetris.move_piece(Vector2::new(-1, 0)) } ),
 
             (VirtualKeyCode::Right, ElementState::Pressed) =>
-            {
-                if self.key_held.is_none() || self.key_held.unwrap() != key
-                {
-                    self.key_held = Some(key);
-                    self.move_piece(Vector2::new(1, 0));
-                }
-            },
+                self.handle_key(key, |tetris| { tetris.move_piece(Vector2::new(1, 0)) } ),
 
             (VirtualKeyCode::Up, ElementState::Pressed) =>
-            {
-                if self.key_held.is_none() || self.key_held.unwrap() != key
-                {
-                    self.key_held = Some(key);
-                    self.rotate_piece();
-                }
-            }
-
+                self.handle_key(key, |tetris| { tetris.rotate_piece() }),
 
             (_, ElementState::Released) =>
             {
@@ -131,6 +125,15 @@ impl Tetris
         LoopState::Play
     }
 
+    fn handle_key<F>(&mut self, key: VirtualKeyCode, mut action: F) where F: FnMut(&mut Tetris)
+    {
+        if self.key_held.is_none() || self.key_held.unwrap() != key
+        {
+            self.key_held = Some(key);
+            action(self);
+        }
+    }
+
     fn move_piece(&mut self, direction: Vector2<i8>)
     {
         let piece = &mut self.tetrominos[0];
@@ -146,7 +149,20 @@ impl Tetris
     fn rotate_piece(&mut self)
     {
         let piece = &mut self.tetrominos[0];
-
         piece.rotate_right();
+    }
+
+    /// Sets up background image
+    fn setup_background(&mut self, display: &mut RootWindow)
+    {
+        //TODO: un-hard-code the width and height
+        self.background = Some(
+            Sprite::new(
+                &display.display,
+                Textures::Background,
+                Rect::new(0.0, 0.0, 400.0, 376.0),
+                Vector2::new(0.0, 0.0)
+            ).unwrap()
+        );
     }
 }

@@ -10,9 +10,13 @@ use cgmath::{Matrix4, Vector2, Vector3};
 
 use rootwindow::Vertex;
 
+use rect::Rect;
+
+use spritemanager::Textures;
+
 pub struct Sprite
 {
-    pub sprite_id: u8,
+    pub texture: Textures,
 
     pub position: Vector3<f32>,
     pub rotation: f32,
@@ -24,36 +28,44 @@ pub struct Sprite
 
 impl Sprite
 {
-    pub fn new(display: &glium::backend::glutin_backend::GlutinFacade, sprite: u8,
-        tint: [f32; 4], position: Vector2<f32>) -> io::Result<Sprite>
+    pub fn new(display: &glium::backend::glutin_backend::GlutinFacade,
+        texture: Textures, rect: Rect, position: Vector2<f32>)
+        -> io::Result<Sprite>
+    {
+        Sprite::new_tinted(display, texture, rect, position, [1.0, 1.0, 1.0, 1.0])
+    }
+
+    pub fn new_tinted(display: &glium::backend::glutin_backend::GlutinFacade,
+        texture: Textures, rect: Rect, position: Vector2<f32>, tint: [f32; 4])
+        -> io::Result<Sprite>
     {
         let vertex_buffer = glium::VertexBuffer::new(display,
             vec![
                 Vertex
                 {
-                    position: [-8.0, -8.0],
+                    position: [rect.left(), rect.top()],
                     color: tint,
                     tex_coords: [0.0, 1.0],
                 },
 
                 Vertex
                 {
-                    position: [8.0, -8.0],
+                    position: [rect.right(), rect.top()],
                     color: tint,
-                    tex_coords: [0.5, 1.0],
+                    tex_coords: [1.0, 1.0],
                 },
 
                 Vertex
                 {
-                    position: [8.0, 8.0],
+                    position: [rect.right(), rect.bottom()],
                     color: tint,
-                    tex_coords: [0.5, 0.5],
+                    tex_coords: [1.0, 0.0],
                 },
 
                 Vertex {
-                    position: [-8.0, 8.0],
+                    position: [rect.left(), rect.bottom()],
                     color: tint,
-                    tex_coords: [0.0, 0.5],
+                    tex_coords: [0.0, 0.0],
                 },
             ]
         );
@@ -64,7 +76,7 @@ impl Sprite
 
         let mut sprite = Sprite
         {
-            sprite_id: sprite,
+            texture: texture,
 
             position: cgmath::zero(),
             rotation: 0.0,
@@ -107,6 +119,18 @@ impl Sprite
 
         let model =  translation * rotmatrix;
 
+        let draw_params = glium::DrawParameters
+        {
+            blending_function:
+                Some(glium::BlendingFunction::Addition
+                {
+                    source: glium::LinearBlendingFactor::SourceAlpha,
+                    destination: glium::LinearBlendingFactor::OneMinusSourceAlpha
+                }),
+
+                .. Default::default()
+        };
+
         target.draw(&self.vertex_buffer,
                     &self.index_buffer,
                     program,
@@ -117,7 +141,7 @@ impl Sprite
                             .sampled()
                             .magnify_filter(glium::uniforms::MagnifySamplerFilter::Nearest),
                     },
-                    &Default::default()
+                    &draw_params
         ).unwrap();
     }
 

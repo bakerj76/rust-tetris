@@ -6,7 +6,9 @@ extern crate image;
 
 mod cellmatrix;
 mod rootwindow;
+mod rect;
 mod sprite;
+mod spritemanager;
 mod tetris;
 mod tetromino;
 

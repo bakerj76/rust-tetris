@@ -5,24 +5,22 @@ use clock_ticks;
 use glium;
 use glium::{DisplayBuild, Surface};
 use glium::glutin;
-use glium::texture;
-
-use image;
 
 use std::thread;
 use std::io;
 
 use sprite::Sprite;
+use spritemanager::SpriteManager;
 use tetris::Tetris;
 
-const WIDTH: u32 = 800;
-const HEIGHT: u32 = 600;
+const WIDTH: u32 = 400;
+const HEIGHT: u32 = 376;
 
 /// The window
 pub struct RootWindow
 {
     pub display: glium::backend::glutin_backend::GlutinFacade,
-    square_texture: Option<texture::Texture2d>,
+    sprite_manager: Option<SpriteManager>,
 
     program: glium::Program,
     ortho_matrix: cgmath::Matrix4<f32>,
@@ -71,7 +69,7 @@ impl RootWindow
         Ok(RootWindow
         {
             display: display,
-            square_texture: None,
+            sprite_manager: None,
 
             program: program,
             ortho_matrix: cgmath::ortho(0.0, WIDTH as f32, HEIGHT as f32, 0.0, -1.0, 1.0),
@@ -84,7 +82,7 @@ impl RootWindow
     /// Starts the draw loop
     pub fn start(&mut self, tetris: &mut Tetris)
     {
-        self.setup_textures();
+        self.sprite_manager = Some(SpriteManager::new(self));
 
         let mut accumulator = 0;
         let mut previous_clock = clock_ticks::precise_time_ns();
@@ -129,21 +127,21 @@ impl RootWindow
     /// TODO: sprite batching
     fn draw(&mut self, tetris: &mut Tetris)
     {
-        let texture = match self.square_texture
+        let mut target = self.display.draw();
+        target.clear_color(1.0, 1.0, 1.0, 1.0);
+
+        let sprite_manager = match self.sprite_manager
         {
             Some(ref x) => x,
-            None => panic!("Square texture not found!")
+            None => panic!("Missing sprite manager!")
         };
 
-        let mut target = self.display.draw();
-        target.clear_color(0.8, 0.8, 0.9, 1.0);
-
-        for ref piece in tetris.tetrominos.iter()
+        for ref sprite in tetris.get_sprites().iter()
         {
-            for ref sprite in piece.sprites.iter()
-            {
-                sprite.draw(&mut target, &self.program, texture, &self.ortho_matrix);
-            }
+            let tex_id = sprite.texture;
+            let ref texture = sprite_manager.get_texture(tex_id);
+
+            sprite.draw(&mut target, &self.program, texture, &self.ortho_matrix);
         }
 
         target.finish();
@@ -170,15 +168,5 @@ impl RootWindow
         }
 
         state
-    }
-
-    // Sets up all of the textures
-    fn setup_textures(&mut self)
-    {
-        //Load image
-        let image = image::load(io::Cursor::new(&include_bytes!("../spritesheet.png")[..]),
-            image::PNG).unwrap();
-
-        self.square_texture = Some(texture::Texture2d::new(&self.display, image));
     }
 }

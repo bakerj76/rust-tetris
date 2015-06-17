@@ -1,10 +1,12 @@
-use cellmatrix::{Cell, CellMatrix};
-use sprite::Sprite;
-use rootwindow::RootWindow;
-
 use cgmath::Vector2;
 
 use glium::texture;
+
+use rect::Rect;
+use cellmatrix::{Cell, CellMatrix};
+use sprite::Sprite;
+use rootwindow::RootWindow;
+use spritemanager::Textures;
 
 pub enum Shape
 {
@@ -27,7 +29,7 @@ pub struct Tetromino
     pub sprites: Vec<Sprite>,
 }
 
-impl Tetromino
+impl  Tetromino
 {
     pub fn new(display: &mut RootWindow, shape: Shape,
         position: Vector2<f32>) -> Tetromino
@@ -112,8 +114,11 @@ impl Tetromino
                 {
                     Cell::Occupied =>
                         sprites.push(
-                            Sprite::new(&display.display, 0, [0.0, 1.0, 0.0, 1.0],
-                            position + Vector2::new(x as f32 * 16.0, y as f32 * 16.0)).unwrap()
+                            Sprite::new_tinted(&display.display, Textures::SpriteSheet,
+                                Rect::new(-8.0, -8.0, 16.0, 16.0),
+                                position + Vector2::new(x as f32 * 16.0, y as f32 * 16.0),
+                                [0.0, 1.0, 0.0, 1.0])
+                                .unwrap()
                         ),
                     _ => ()
                 }
