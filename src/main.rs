@@ -5,7 +5,7 @@ extern crate cgmath;
 extern crate image;
 
 mod cellmatrix;
-mod frametimer;
+//mod frametimer;
 mod rootwindow;
 mod rect;
 mod sprite;

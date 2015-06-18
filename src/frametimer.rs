@@ -1,4 +1,4 @@
-use tetris::Tetris;
+/*use tetris::Tetris;
 
 pub struct FrameTimer
 {
@@ -15,7 +15,7 @@ pub struct FrameTimer
 /// TODO: Move callback to constructor
 impl FrameTimer
 {
-    pub fn new<F>(end_frame: u32, repeating: bool, callback: F)
+    pub fn new<F>(end_frame: u32, repeating: bool, callback: Box<F>)
         -> FrameTimer where F: FnMut()
     {
         FrameTimer
@@ -26,7 +26,7 @@ impl FrameTimer
             enabled: false,
             repeating: repeating,
 
-            callback: Box::new(callback),
+            callback: callback,
         }
     }
 
@@ -59,3 +59,4 @@ impl FrameTimer
         self.current_frame = 0;
     }
 }
+*/

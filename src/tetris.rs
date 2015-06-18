@@ -6,7 +6,7 @@ use cgmath::Vector2;
 use glium::glutin::{Event, ElementState, VirtualKeyCode};
 
 use cellmatrix::CellMatrix;
-use frametimer::FrameTimer;
+//use frametimer::FrameTimer;
 use sprite::Sprite;
 use spritemanager::Textures;
 use tetromino::{Tetromino, Shape};
@@ -25,7 +25,7 @@ pub struct Tetris
     board: CellMatrix,
 
     gravity: f32,
-    gravity_timer: Option<FrameTimer>,
+    gravity_frame: u32,
 
     background: Option<Sprite>,
     tetrominos: Vec<Tetromino>,
@@ -45,7 +45,7 @@ impl Tetris
             board: CellMatrix::new(10, 22),
 
             gravity: 1.0/60.0,
-            gravity_timer: None,
+            gravity_frame: 0,
 
             background: None,
             tetrominos: vec![],
@@ -56,10 +56,6 @@ impl Tetris
     {
         let tetromino = Tetromino::new(display, Shape::LBlock, BOARD_POS, Vector2::new(3, 0));
 
-        let callback = || { self.gravity(); };
-
-        self.gravity_timer = Some(FrameTimer::new((1.0/self.gravity) as u32, true, callback));
-
         self.tetrominos.push(tetromino);
         self.setup_background(display);
 
@@ -68,13 +64,14 @@ impl Tetris
 
     pub fn update(&mut self)
     {
-        let ref gravity_timer = self.gravity_timer;
+        self.gravity_frame += 1;
 
-        match gravity_timer
+        if self.gravity_frame > (1.0/self.gravity) as u32
         {
-            Some(x) => x.update(),
-            None => ()
+            self.gravity();
+            self.gravity_frame = 0;
         }
+
     }
 
     pub fn get_sprites(&mut self) -> Vec<&Sprite>
@@ -176,7 +173,8 @@ impl Tetris
 
     fn gravity(&mut self)
     {
-        self.move_piece(Vector2::new(0, self.gravity.ceil() as i8));
+        let velocity = self.gravity.ceil() as i8;
+        self.move_piece(Vector2::new(0, velocity));
     }
 
     /// Sets up background image
