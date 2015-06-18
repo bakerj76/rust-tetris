@@ -1,5 +1,4 @@
 use std::io;
-use std::f32;
 
 use cgmath::Vector2;
 
@@ -161,8 +160,13 @@ impl Tetris
     fn move_piece(&mut self, direction: Vector2<i8>)
     {
         let piece = &mut self.tetrominos[0];
-        let position = piece.cell_position + direction;
-        piece.set_position(position);
+
+        let next_pos = piece.cell_position + direction;
+
+        if !piece.collides(&mut self.board, next_pos)
+        {
+            piece.set_position(next_pos);
+        }
     }
 
     fn rotate_piece(&mut self)
@@ -173,8 +177,8 @@ impl Tetris
 
     fn gravity(&mut self)
     {
-        let velocity = self.gravity.ceil() as i8;
-        self.move_piece(Vector2::new(0, velocity));
+        let velocity = Vector2::new(0, self.gravity.ceil() as i8);
+        self.move_piece(velocity);
     }
 
     /// Sets up background image

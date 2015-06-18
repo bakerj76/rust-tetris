@@ -25,7 +25,7 @@ pub struct Tetromino
     pub board_position: Vector2<f32>,
     pub cell_position: Vector2<i8>,
 
-    matrix: CellMatrix,
+    pub matrix: CellMatrix,
     pub sprites: Vec<Sprite>,
 }
 
@@ -64,6 +64,11 @@ impl  Tetromino
     {
         self.matrix.rotate_right();
         self.update_sprites();
+    }
+
+    pub fn collides(&self, board: &CellMatrix, next_pos: Vector2<i8>) -> bool
+    {
+        self.matrix.collides(board, next_pos)
     }
 
     /// Moves all of the sprites based on the matrix and position

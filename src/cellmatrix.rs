@@ -1,3 +1,5 @@
+use cgmath::Vector2;
+
 #[derive(Copy, Clone)]
 pub enum Cell
 {
@@ -5,6 +7,7 @@ pub enum Cell
     Unoccupied
 }
 
+#[derive(Clone)]
 pub struct CellMatrix
 {
     pub width: u8,
@@ -84,5 +87,40 @@ impl CellMatrix
         self.height = temp.height;
         self.width = temp.width;
         self.matrix = temp.matrix;
+    }
+
+    pub fn collides(&self, board: &CellMatrix, offset: Vector2<i8>) -> bool
+    {
+        for y in 0..self.height
+        {
+            for x in 0..self.width
+            {
+                match self.get_cell(x, y)
+                {
+                    Cell::Occupied =>
+                    {
+                        let pos = Vector2::new(x as i8 + offset.x,
+                            y as i8 + offset.y);
+
+                        if  pos.x < board.width as i8 && pos.x >= 0 &&
+                            pos.y < board.height as i8 && pos.y >= 0
+                        {
+                            match board.get_cell(pos.x as u8, pos.y as u8)
+                            {
+                                Cell::Occupied => return true,
+                                _ => ()
+                            }
+                        }
+                        else
+                        {
+                            return true
+                        }
+                    }
+                    _ => ()
+                }
+            }
+        }
+
+        false
     }
 }
