@@ -1,18 +1,15 @@
 use std::io;
 
-use glium;
-use glium::Surface;
-use glium::{index, texture};
-
 use cgmath;
 use cgmath::{Matrix4, Vector2, Vector3};
 
-use rootwindow::Vertex;
+use glium;
+use glium::Surface;
+use glium::index;
 
 use rect::Rect;
-
-use spritemanager::Textures;
-
+use rootwindow::Vertex;
+use spritemanager::{SpriteManager, Textures};
 
 pub struct Sprite
 {
@@ -70,7 +67,8 @@ impl Sprite
             ]
         );
 
-        let index_buffer = glium::IndexBuffer::new(display, index::PrimitiveType::TrianglesList,
+        let index_buffer = glium::IndexBuffer::new(display,
+            index::PrimitiveType::TrianglesList,
             vec![0, 2, 1, 0, 3, 2]
         );
 
@@ -93,31 +91,16 @@ impl Sprite
     }
 
     pub fn draw(&self, target: &mut glium::Frame, program: &glium::Program,
-        texture: &texture::Texture2d, projection: &Matrix4<f32>)
+        sprite_manager: &SpriteManager, projection: &Matrix4<f32>)
     {
-        /*
-        let rotation = self.rotation * consts::PI / 180.0;
-
-        let cosrot = rotation.cos();
-        let sinrot = rotation.sin();
-
-        let rotmatrix: Matrix4<f32> = Matrix4::new(cosrot, -sinrot, 0.0, 0.0,
-                                                  sinrot,  cosrot, 0.0, 0.0,
-                                                  0.0,     0.0,    1.0, 0.0,
-                                                  0.0,     0.0,    0.0, 1.0);
-
-        println!("[[{}, {}, {}, {}]\n[{}, {}, {}, {}]\n[{}, {}, {}, {}]\n[{}, {}, {}, {}]]",
-            rotation.x.x, rotation.y.x, rotation.z.x, rotation.w.x,
-            rotation.x.y, rotation.y.y, rotation.z.y, rotation.w.y,
-            rotation.x.z, rotation.y.z, rotation.z.z, rotation.w.z,
-            rotation.x.w, rotation.y.w, rotation.z.w, rotation.w.w);
-        */
-
         let rotmatrix = Matrix4::<f32>::identity();
 
         let translation = Matrix4::from_translation(&self.position);
 
         let model =  translation * rotmatrix;
+        
+        let tex_id = self.texture;
+        let ref texture = sprite_manager.get_texture(tex_id);
 
         let draw_params = glium::DrawParameters
         {

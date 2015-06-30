@@ -1,8 +1,8 @@
+use std::io;
+
 use glium::texture;
 
 use image;
-
-use std::io;
 
 use rootwindow::RootWindow;
 
@@ -24,11 +24,15 @@ impl SpriteManager
     pub fn new(root_window: &RootWindow) -> SpriteManager
     {
         //Load image
-        let sprite_sheet = image::load(io::Cursor::new(&include_bytes!("../spritesheet.png")[..]),
-            image::PNG).unwrap();
+        let sprite_sheet = image::load(
+            io::Cursor::new(&include_bytes!("../images/spritesheet.png")[..]),
+            image::PNG
+        ).unwrap();
 
-        let background = image::load(io::Cursor::new(&include_bytes!("../background.png")[..]),
-            image::PNG).unwrap();
+        let background = image::load(
+            io::Cursor::new(&include_bytes!("../images/background.png")[..]),
+            image::PNG
+        ).unwrap();
 
         SpriteManager
         {

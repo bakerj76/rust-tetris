@@ -1,3 +1,6 @@
+use std::thread;
+use std::io;
+
 use cgmath;
 
 use clock_ticks;
@@ -6,24 +9,22 @@ use glium;
 use glium::{DisplayBuild, Surface};
 use glium::glutin;
 
-use std::thread;
-use std::io;
-
 use spritemanager::SpriteManager;
 use tetris::Tetris;
-
 
 /// The window
 pub struct RootWindow
 {
+    tetris: Tetris,
+
     pub display: glium::backend::glutin_backend::GlutinFacade,
     sprite_manager: Option<SpriteManager>,
 
     program: glium::Program,
     ortho_matrix: cgmath::Matrix4<f32>,
 
-    pub max_frame_rate: u32,
-    pub delta_time: f64,
+    max_frame_rate: u32,
+    delta_time: f64,
 }
 
 #[derive(Copy, Clone)]
@@ -34,12 +35,9 @@ pub struct Vertex
     pub tex_coords: [f32; 2],
 }
 
-
-/// The current update/draw state
-/// TODO: Rename this
-pub enum LoopState
+pub enum GameState
 {
-    Stop,
+    Exit,
     Play,
 }
 
@@ -57,8 +55,8 @@ impl RootWindow
         let program = program!(&display,
             140 =>
             {
-                    vertex: include_str!("shaders/140.vert"),
-                    fragment: include_str!("shaders/140.frag"),
+                vertex: include_str!("shaders/140.vert"),
+                fragment: include_str!("shaders/140.frag"),
             },
         ).unwrap();
 
@@ -66,6 +64,8 @@ impl RootWindow
 
         Ok(RootWindow
         {
+            tetris: Tetris::new(width, height),
+
             display: display,
             sprite_manager: None,
 
@@ -78,22 +78,17 @@ impl RootWindow
     }
 
     /// Starts the draw loop
-    pub fn start(&mut self, tetris: &mut Tetris)
+    pub fn start(&mut self)
     {
         self.sprite_manager = Some(SpriteManager::new(self));
+        
+        self.tetris.start(&self.display);
 
         let mut accumulator = 0;
         let mut previous_clock = clock_ticks::precise_time_ns();
 
         loop
         {
-            self.draw(tetris);
-            match self.do_input(tetris)
-            {
-                LoopState::Stop => break,
-                _ => ()
-            }
-
             let now = clock_ticks::precise_time_ns();
 
             // Add the time between the last loop
@@ -102,7 +97,7 @@ impl RootWindow
             // The time for each frame in nanoseconds
             let fixed_time_stamp = (1.0 / self.max_frame_rate as f64 * 1E+9) as u64;
 
-            // While the amount of time in the accumulator is greater than the time to draw a frame
+            // Loop the amount of update ticks that are saved up
             while accumulator >= fixed_time_stamp
             {
                 // The time since the last frame
@@ -112,8 +107,15 @@ impl RootWindow
                 accumulator -= fixed_time_stamp;
 
                 // Update the game logic
-                tetris.update();
+                match self.do_input()
+                {
+                    GameState::Exit => return,
+                    GameState::Play => ()
+                }
             }
+
+            // Finally, draw the sprites
+            self.draw();
 
             previous_clock = now;
 
@@ -123,7 +125,7 @@ impl RootWindow
 
     /// Handles sprite drawing
     /// TODO: sprite batching
-    fn draw(&mut self, tetris: &mut Tetris)
+    fn draw(&mut self)
     {
         let mut target = self.display.draw();
         target.clear_color(1.0, 1.0, 1.0, 1.0);
@@ -134,33 +136,27 @@ impl RootWindow
             None => panic!("Missing sprite manager!")
         };
 
-        for ref sprite in tetris.get_sprites().iter()
-        {
-            let tex_id = sprite.texture;
-            let ref texture = sprite_manager.get_texture(tex_id);
-
-            sprite.draw(&mut target, &self.program, texture, &self.ortho_matrix);
-        }
+        self.tetris.draw_sprites(&mut target, &self.program, sprite_manager, &self.ortho_matrix);
 
         target.finish();
     }
 
     /// Handles events
-    fn do_input(&self, tetris: &mut Tetris) -> LoopState
+    fn do_input(&mut self) -> GameState
     {
-        let mut state = LoopState::Play;
+        let mut state = GameState::Play;
 
         for event in self.display.poll_events()
         {
             state = match event
             {
-                glutin::Event::Closed => LoopState::Stop,
-                _ => tetris.handle_input(event),
+                glutin::Event::Closed => GameState::Exit,
+                _ => self.tetris.update(event),
             };
 
             match state
             {
-                LoopState::Stop => return state,
+                GameState::Exit => return state,
                 _ => ()
             }
         }

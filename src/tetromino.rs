@@ -1,9 +1,10 @@
 use cgmath::Vector2;
 
-use rect::Rect;
+use glium;
+
 use cellmatrix::{Cell, CellMatrix};
+use rect::Rect;
 use sprite::Sprite;
-use rootwindow::RootWindow;
 use spritemanager::Textures;
 
 
@@ -31,7 +32,7 @@ pub struct Tetromino
 
 impl  Tetromino
 {
-    pub fn new(display: &mut RootWindow, shape: Shape,
+    pub fn new(display: &glium::backend::glutin_backend::GlutinFacade, shape: Shape,
         board_position: Vector2<f32>, cell_position: Vector2<i8>) -> Tetromino
     {
         let matrix = Tetromino::build_matrix(&shape);
@@ -66,6 +67,12 @@ impl  Tetromino
         self.update_sprites();
     }
 
+    pub fn rotate_left(&mut self)
+    {
+        self.matrix.rotate_left();
+        self.update_sprites();
+    }
+    
     pub fn collides(&self, board: &CellMatrix, next_pos: Vector2<i8>) -> bool
     {
         self.matrix.collides(board, next_pos)
@@ -112,7 +119,7 @@ impl  Tetromino
         matrix
     }
 
-    fn build_sprites(display: &mut RootWindow, matrix: &CellMatrix)
+    fn build_sprites(display: &glium::backend::glutin_backend::GlutinFacade, matrix: &CellMatrix)
         -> Vec<Sprite>
     {
         let mut sprites = Vec::<Sprite>::new();
@@ -125,11 +132,13 @@ impl  Tetromino
                 {
                     Cell::Occupied =>
                         sprites.push(
-                            Sprite::new_tinted(&display.display, Textures::SpriteSheet,
+                            Sprite::new_tinted(
+                                display,
+                                Textures::SpriteSheet,
                                 Rect::new(-8.0, -8.0, 16.0, 16.0),
                                 Vector2::new(0.0, 0.0),
-                                [0.0, 1.0, 0.0, 1.0])
-                                .unwrap()
+                                [0.0, 1.0, 0.0, 1.0]
+                            ).unwrap()
                         ),
                     _ => ()
                 }
