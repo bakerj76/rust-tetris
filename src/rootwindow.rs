@@ -89,6 +89,14 @@ impl RootWindow
 
         loop
         {
+            // Get input
+            match self.do_input()
+            {
+                GameState::Exit => return,
+                GameState::Play => ()
+            }
+
+        
             let now = clock_ticks::precise_time_ns();
 
             // Add the time between the last loop
@@ -106,14 +114,11 @@ impl RootWindow
 
                 accumulator -= fixed_time_stamp;
 
-                // Update the game logic
-                match self.do_input()
-                {
-                    GameState::Exit => return,
-                    GameState::Play => ()
-                }
-            }
 
+                // Update the game logic
+                self.tetris.update();
+            }
+            
             // Finally, draw the sprites
             self.draw();
 
@@ -151,7 +156,7 @@ impl RootWindow
             state = match event
             {
                 glutin::Event::Closed => GameState::Exit,
-                _ => self.tetris.update(event),
+                _ => self.tetris.handle_input(event),
             };
 
             match state

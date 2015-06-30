@@ -60,10 +60,8 @@ impl Tetris
         self.setup_background(display);
     }
 
-    pub fn update(&mut self, event: Event) -> GameState
+    pub fn update(&mut self) -> GameState
     {
-        let gamestate = self.handle_input(event);
-
         self.gravity_frame += 1;
 
         if self.gravity_frame > (1.0/self.gravity) as u32
@@ -72,7 +70,7 @@ impl Tetris
             self.gravity_frame = 0;
         }
 
-        gamestate
+        GameState::Play
     }
 
     pub fn handle_input(&mut self, event: Event) -> GameState
@@ -112,9 +110,11 @@ impl Tetris
 
             (VirtualKeyCode::Down, ElementState::Pressed) =>
             {
-                self.handle_key(key, |tetris| { tetris.old_gravity = tetris.gravity });
-
-                self.gravity += 1.0;
+                self.handle_key(key, |tetris| 
+                { 
+                    tetris.old_gravity = tetris.gravity; 
+                    tetris.gravity += 0.5; 
+                });
             },
 
             (VirtualKeyCode::Down, ElementState::Released) =>
@@ -155,15 +155,13 @@ impl Tetris
     pub fn draw_sprites(&mut self, target: &mut glium::Frame, program: &glium::Program,
         sprite_manager: &SpriteManager, projection: &Matrix4<f32>)
     {
+        let ref bg = match self.background
         {
-            let ref bg = match self.background
-            {
-                Some(ref x) => x,
-                None => panic!("No background sprite found!")
-            };
-            
-            bg.draw(target, program, sprite_manager, projection);
-        }
+            Some(ref x) => x,
+            None => panic!("No background sprite found!")
+        };
+        
+        bg.draw(target, program, sprite_manager, projection);
         
         for tetromino in self.tetrominos.iter()
         {
@@ -171,6 +169,17 @@ impl Tetris
             {
                 sprite.draw(target, program, sprite_manager, projection);
             }
+        }
+        
+        let ref ct = match self.current_tetromino
+        {
+            Some(ref x) => x,
+            None => return
+        };
+        
+        for sprite in ct.sprites.iter()
+        {
+            sprite.draw(target, program, sprite_manager, projection)
         }
     }
 
